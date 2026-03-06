@@ -15,7 +15,7 @@ import (
 	"webalyze/internal/runner"
 )
 
-const appVersion = "dev"
+var appVersion = "dev"
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	startedAt := time.Now()

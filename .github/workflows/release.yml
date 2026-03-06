@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build release artifacts
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+          targets=(
+            "linux amd64"
+            "linux arm64"
+            "darwin amd64"
+            "darwin arm64"
+            "windows amd64"
+          )
+
+          for target in "${targets[@]}"; do
+            read -r os arch <<<"$target"
+
+            binary="webalyze"
+            if [ "$os" = "windows" ]; then
+              binary="webalyze.exe"
+            fi
+
+            out_dir="dist/webalyze_${VERSION}_${os}_${arch}"
+            mkdir -p "$out_dir"
+
+            GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 \
+              go build -trimpath -ldflags="-s -w -X main.appVersion=${VERSION}" \
+              -o "${out_dir}/${binary}" ./cmd/webalyze
+
+            if [ "$os" = "windows" ]; then
+              (
+                cd dist
+                zip -r "webalyze_${VERSION}_${os}_${arch}.zip" "webalyze_${VERSION}_${os}_${arch}"
+              )
+            else
+              tar -C dist -czf "dist/webalyze_${VERSION}_${os}_${arch}.tar.gz" "webalyze_${VERSION}_${os}_${arch}"
+            fi
+          done
+
+      - name: Create checksums
+        run: |
+          set -euo pipefail
+          (
+            cd dist
+            shopt -s nullglob
+            sha256sum *.tar.gz *.zip > checksums.txt
+          )
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
