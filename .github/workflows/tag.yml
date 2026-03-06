@@ -25,6 +25,8 @@ jobs:
   create-tag:
     name: Create and push tag
     runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag.outputs.new_tag }}
 
     steps:
       - name: Checkout repository
@@ -116,5 +118,12 @@ jobs:
             echo "- Previous tag: \`${{ steps.tag.outputs.latest_tag }}\`"
             echo "- New tag: \`${{ steps.tag.outputs.new_tag }}\`"
             echo ""
-            echo "Pushing this tag triggers the release workflow."
+            echo "Release workflow will run in the next job."
           } >> "${GITHUB_STEP_SUMMARY}"
+
+  release:
+    name: Build and publish release
+    needs: create-tag
+    uses: ./.github/workflows/release.yml
+    with:
+      release_tag: ${{ needs.create-tag.outputs.new_tag }}
