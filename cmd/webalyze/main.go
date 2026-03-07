@@ -120,9 +120,10 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	var failed atomic.Int64
 	var outputErr atomic.Pointer[error]
 	runner.RunStream(context.Background(), targets, runner.Config{
-		Retry:   cfg.Retry,
-		Timeout: cfg.Timeout,
-		Workers: cfg.Workers,
+		Retry:          cfg.Retry,
+		Timeout:        cfg.Timeout,
+		Workers:        cfg.Workers,
+		FollowRedirect: cfg.FollowRedirect,
 	}, func(result runner.Result) {
 		if result.Err != nil {
 			failed.Add(1)

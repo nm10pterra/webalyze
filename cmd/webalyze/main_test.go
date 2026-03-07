@@ -21,6 +21,7 @@ func TestParseConfig_Basic(t *testing.T) {
 		"-filter-category", "CMS",
 		"-retry", "3",
 		"-timeout", "5s",
+		"-follow-redirects",
 		"-j",
 		"-nc",
 		"-silent",
@@ -50,6 +51,9 @@ func TestParseConfig_Basic(t *testing.T) {
 	if got, want := len(cfg.FilterCategory), 2; got != want {
 		t.Fatalf("filter category len mismatch got=%d want=%d", got, want)
 	}
+	if !cfg.FollowRedirect {
+		t.Fatalf("expected follow redirects to be true")
+	}
 }
 
 func TestParseConfig_RetryValidation(t *testing.T) {
@@ -58,6 +62,18 @@ func TestParseConfig_RetryValidation(t *testing.T) {
 	_, err := parseConfig([]string{"-retry", "0"}, &bytes.Buffer{})
 	if err == nil {
 		t.Fatalf("expected retry validation error")
+	}
+}
+
+func TestParseConfig_FollowRedirectDefault(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := parseConfig([]string{"-i", "example.com"}, &bytes.Buffer{})
+	if err != nil {
+		t.Fatalf("parse config: %v", err)
+	}
+	if cfg.FollowRedirect {
+		t.Fatalf("expected follow redirects default to be false")
 	}
 }
 

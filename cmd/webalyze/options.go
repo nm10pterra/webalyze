@@ -37,6 +37,7 @@ type config struct {
 	Retry          int
 	Timeout        time.Duration
 	Workers        int
+	FollowRedirect bool
 	Silent         bool
 	NoColor        bool
 	Verbose        bool
@@ -72,6 +73,8 @@ func newFlagSet(stderr io.Writer) (*flag.FlagSet, *config, *stringSliceFlag, *st
 	fs.DurationVar(&cfg.Timeout, "timeout", 10*time.Second, "request timeout")
 	fs.IntVar(&cfg.Workers, "c", 10, "number of concurrent workers")
 	fs.IntVar(&cfg.Workers, "concurrency", 10, "number of concurrent workers")
+	fs.BoolVar(&cfg.FollowRedirect, "fr", false, "follow http redirects")
+	fs.BoolVar(&cfg.FollowRedirect, "follow-redirects", false, "follow http redirects")
 	fs.BoolVar(&cfg.Silent, "silent", false, "only display results")
 	fs.BoolVar(&cfg.NoColor, "nc", false, "disable colors in cli output")
 	fs.BoolVar(&cfg.NoColor, "no-color", false, "disable colors in cli output")
@@ -107,6 +110,7 @@ func newFlagSet(stderr io.Writer) (*flag.FlagSet, *config, *stringSliceFlag, *st
 		fmt.Fprintln(fs.Output(), "  -retry int                maximum number of retries for requests (default 2)")
 		fmt.Fprintln(fs.Output(), "  -timeout duration         per-request timeout (default 10s)")
 		fmt.Fprintln(fs.Output(), "  -c, -concurrency int      number of concurrent workers (default 10)")
+		fmt.Fprintln(fs.Output(), "  -fr, -follow-redirects    follow http redirects")
 	}
 
 	return fs, cfg, &inputs, &matchTech, &filterTech, &matchCategory, &filterCategory

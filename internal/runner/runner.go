@@ -17,9 +17,10 @@ import (
 )
 
 type Config struct {
-	Retry   int
-	Timeout time.Duration
-	Workers int
+	Retry          int
+	Timeout        time.Duration
+	Workers        int
+	FollowRedirect bool
 }
 
 type Result struct {
@@ -64,7 +65,7 @@ func RunStream(ctx context.Context, targets []string, cfg Config, onResult func(
 		}
 		return
 	}
-	client := &http.Client{Timeout: cfg.Timeout}
+	client := newHTTPClient(cfg)
 
 	jobs := make(chan string)
 	var wg sync.WaitGroup
@@ -96,12 +97,12 @@ func processTarget(ctx context.Context, client *http.Client, wappalyzerClient *w
 
 	var errs []error
 	for _, candidate := range urlCandidates {
-		tech, cats, techToCats, reqErr := fingerprintURL(ctx, client, wappalyzerClient, candidate, retry)
+		finalURL, tech, cats, techToCats, reqErr := fingerprintURL(ctx, client, wappalyzerClient, candidate, retry)
 		if reqErr != nil {
 			errs = append(errs, reqErr)
 			continue
 		}
-		result.URL = candidate
+		result.URL = finalURL
 		result.Technologies = tech
 		result.Categories = cats
 		result.TechToCats = techToCats
@@ -122,9 +123,7 @@ func runSequential(ctx context.Context, targets []string, cfg Config) []Result {
 		return results
 	}
 
-	client := &http.Client{
-		Timeout: cfg.Timeout,
-	}
+	client := newHTTPClient(cfg)
 
 	results := make([]Result, 0, len(targets))
 	for _, target := range targets {
@@ -133,12 +132,12 @@ func runSequential(ctx context.Context, targets []string, cfg Config) []Result {
 
 		var errs []error
 		for _, candidate := range urlCandidates {
-			tech, cats, techToCats, reqErr := fingerprintURL(ctx, client, wappalyzerClient, candidate, cfg.Retry)
+			finalURL, tech, cats, techToCats, reqErr := fingerprintURL(ctx, client, wappalyzerClient, candidate, cfg.Retry)
 			if reqErr != nil {
 				errs = append(errs, reqErr)
 				continue
 			}
-			result.URL = candidate
+			result.URL = finalURL
 			result.Technologies = tech
 			result.Categories = cats
 			result.TechToCats = techToCats
@@ -168,12 +167,12 @@ func candidates(target string) []string {
 	return []string{"https://" + raw, "http://" + raw}
 }
 
-func fingerprintURL(ctx context.Context, client *http.Client, w *wappalyzer.Wappalyze, targetURL string, retry int) ([]string, []string, map[string][]string, error) {
+func fingerprintURL(ctx context.Context, client *http.Client, w *wappalyzer.Wappalyze, targetURL string, retry int) (string, []string, []string, map[string][]string, error) {
 	var lastErr error
 	for attempt := 1; attempt <= retry; attempt++ {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("build request: %w", err)
+			return "", nil, nil, nil, fmt.Errorf("build request: %w", err)
 		}
 		req.Header.Set("User-Agent", "webalyze/"+appVersion())
 
@@ -227,11 +226,23 @@ func fingerprintURL(ctx context.Context, client *http.Client, w *wappalyzer.Wapp
 		for _, techName := range tech {
 			resultTechToCats[techName] = techToCats[techName]
 		}
-		return tech, cats, resultTechToCats, nil
+		return resp.Request.URL.String(), tech, cats, resultTechToCats, nil
 	}
-	return nil, nil, nil, lastErr
+	return "", nil, nil, nil, lastErr
 }
 
 func appVersion() string {
 	return "dev"
+}
+
+func newHTTPClient(cfg Config) *http.Client {
+	client := &http.Client{
+		Timeout: cfg.Timeout,
+	}
+	if !cfg.FollowRedirect {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
+	return client
 }
