@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"webalyze/internal/runner"
+	"github.com/nm10pterra/webalyze/internal/runner"
 )
 
 type Options struct {

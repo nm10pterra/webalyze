@@ -10,9 +10,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"webalyze/internal/input"
-	"webalyze/internal/output"
-	"webalyze/internal/runner"
+	"github.com/nm10pterra/webalyze/internal/input"
+	"github.com/nm10pterra/webalyze/internal/output"
+	"github.com/nm10pterra/webalyze/internal/runner"
 )
 
 var appVersion = "dev"

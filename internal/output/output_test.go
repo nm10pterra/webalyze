@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"webalyze/internal/runner"
+	"github.com/nm10pterra/webalyze/internal/runner"
 )
 
 func TestRenderPlain_WithFiltersAndVerboseError(t *testing.T) {

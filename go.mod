@@ -1,4 +1,4 @@
-module webalyze
+module github.com/nm10pterra/webalyze
 
 go 1.24.0
 
