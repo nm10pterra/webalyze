@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"bytes"
@@ -82,7 +82,7 @@ func TestRun_Version(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run([]string{"-version"}, &bytes.Buffer{}, &stdout, &stderr)
+	code := Run([]string{"-version"}, &bytes.Buffer{}, &stdout, &stderr, "dev")
 	if code != 0 {
 		t.Fatalf("expected exit code 0 got=%d", code)
 	}
@@ -96,7 +96,7 @@ func TestRun_NoArgsPrintsHelp(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run(nil, &bytes.Buffer{}, &stdout, &stderr)
+	code := Run(nil, &bytes.Buffer{}, &stdout, &stderr, "dev")
 	if code != 0 {
 		t.Fatalf("expected exit code 0 got=%d", code)
 	}
@@ -116,7 +116,7 @@ func TestRun_HelpPrintsBannerAndHelp(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run([]string{"-h"}, &bytes.Buffer{}, &stdout, &stderr)
+	code := Run([]string{"-h"}, &bytes.Buffer{}, &stdout, &stderr, "dev")
 	if code != 0 {
 		t.Fatalf("expected exit code 0 got=%d", code)
 	}
@@ -136,11 +136,12 @@ func TestRun_JSONLBannerAndSummaryOnStderr(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run(
+	code := Run(
 		[]string{"-j", "-i", "://bad-target", "-v"},
 		&bytes.Buffer{},
 		&stdout,
 		&stderr,
+		"dev",
 	)
 	if code != 1 {
 		t.Fatalf("expected exit code 1 got=%d", code)
@@ -161,11 +162,12 @@ func TestRun_SilentSuppressesBannerAndSummary(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run(
+	code := Run(
 		[]string{"-j", "-silent", "-i", "://bad-target"},
 		&bytes.Buffer{},
 		&stdout,
 		&stderr,
+		"dev",
 	)
 	if code != 1 {
 		t.Fatalf("expected exit code 1 got=%d", code)

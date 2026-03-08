@@ -15,7 +15,13 @@ Website technology fingerprinting CLI.
 Install the latest version:
 
 ```bash
-go install github.com/nm10pterra/webalyze/cmd/webalyze@latest
+go install github.com/nm10pterra/webalyze@latest
+```
+
+Install a pinned version:
+
+```bash
+go install github.com/nm10pterra/webalyze@v0.1.2
 ```
 
 ## Usage

@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"context"
@@ -15,9 +15,7 @@ import (
 	"github.com/nm10pterra/webalyze/internal/runner"
 )
 
-var appVersion = "dev"
-
-func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, version string) int {
 	startedAt := time.Now()
 
 	helpRequested := false
@@ -28,14 +26,14 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		}
 	}
 	if helpRequested {
-		printBanner(stderr, appVersion)
+		printBanner(stderr, version)
 		fs, _, _, _, _, _, _ := newFlagSet(stderr)
 		fs.Usage()
 		return 0
 	}
 
 	if len(args) == 0 {
-		printBanner(stderr, appVersion)
+		printBanner(stderr, version)
 		fs, _, _, _, _, _, _ := newFlagSet(stderr)
 		fs.Usage()
 		return 0
@@ -50,7 +48,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 1
 	}
 	if cfg.Version {
-		fmt.Fprintln(stdout, appVersion)
+		fmt.Fprintln(stdout, version)
 		return 0
 	}
 
@@ -95,7 +93,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	streamWriter := output.NewSyncWriter(resultWriters...)
 
 	if !cfg.Silent {
-		printBanner(metaWriter, appVersion)
+		printBanner(metaWriter, version)
 	}
 
 	renderOpts := output.Options{
@@ -167,10 +165,6 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
-}
-
-func main() {
-	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }
 
 func isTerminalWriter(w io.Writer) bool {
